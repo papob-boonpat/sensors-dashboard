@@ -21,10 +21,14 @@ End-to-end telemetry ingestion, time-series storage, interval-based reporting, a
 
 ## Quick Start (Local Development)
 
-### 1. Start Mosquitto & TimescaleDB (or full stack via Docker)
+### 1. Start Mosquitto, MQTT UI, & TimescaleDB
 ```bash
-docker compose up -d mosquitto timescaledb
+docker compose up -d
 ```
+- **MQTT Broker**: `mqtt://localhost:1883` (WebSocket: `ws://localhost:9001`)
+- **MQTT Web UI (MQTTX)**: `http://localhost:8080` (connect using `ws://localhost:9001`)
+- **TimescaleDB**: `postgres://postgres:postgrespassword@localhost:5432/telemetry`
+- *(Optional)* To also run `backend` and `frontend` in Docker: `docker compose --profile app up -d`
 
 ### 2. Backend
 ```bash

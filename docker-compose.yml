@@ -4,9 +4,19 @@ services:
     container_name: data-logger-mosquitto
     ports:
       - "1883:1883"
+      - "9001:9001"
     volumes:
       - ./mosquitto/mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
       - mosquitto_data:/mosquitto/data
+    restart: unless-stopped
+
+  mqtt-ui:
+    image: emqx/mqttx-web:latest
+    container_name: data-logger-mqtt-ui
+    ports:
+      - "8080:80"
+    depends_on:
+      - mosquitto
     restart: unless-stopped
 
   timescaledb:
@@ -23,6 +33,7 @@ services:
     restart: unless-stopped
 
   backend:
+    profiles: ["app"]
     build: ./backend
     container_name: data-logger-backend
     ports:
@@ -40,6 +51,7 @@ services:
     restart: unless-stopped
 
   frontend:
+    profiles: ["app"]
     build: ./frontend
     container_name: data-logger-frontend
     ports:
