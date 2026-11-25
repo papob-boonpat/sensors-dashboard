@@ -18,27 +18,18 @@ The Advantech ECU-1051 requires **no custom application code**. Configure it usi
 
 ## 4. Expected JSON Payload Formats
 
-### Multi-sensor batch payload (recommended)
+### ECU-1051 EdgeLink Standard Payload (recommended)
 ```json
 {
-  "gateway_id": "ecu-1051-01",
-  "ts": 1732286400000,
-  "sensors": [
-    {
-      "sensor_id": "TEMP_01",
-      "type": "temperature",
-      "value": 42.6,
-      "status_code": 0
-    },
-    {
-      "sensor_id": "PRESS_02",
-      "type": "pressure",
-      "value": 5.82,
-      "status_code": 0
-    }
-  ]
+  "d": [
+    { "tag": "TEMP_01", "value": 30.00 },
+    { "tag": "PRESS_02", "value": 5.82 }
+  ],
+  "ts": "2026-11-25T16:00:20Z",
+  "type": 0
 }
 ```
+*(The `gateway_id` is extracted automatically from the MQTT topic `gateways/<gateway_id>/telemetry`.)*
 
 ### Single-sensor payload (also supported)
 ```json

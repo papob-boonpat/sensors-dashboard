@@ -21,8 +21,7 @@ function buildSensors(gatewayIndex: number, countPerGateway: number) {
               ? 120
               : 18;
     const value = Number((base + Math.sin(Date.now() / 10000 + i) * (base * 0.15) + (Math.random() - 0.5)).toFixed(2));
-    const statusCode = Math.random() < 0.02 ? 2 : 0;
-    sensors.push({ sensor_id: sensorId, type, value, status_code: statusCode });
+    sensors.push({ tag: sensorId, value });
   }
   return sensors;
 }
@@ -35,12 +34,12 @@ client.on('connect', () => {
   // Simulate a Store & Forward historical burst on startup (last 10 minutes at 1-minute intervals)
   const now = Date.now();
   for (let m = 10; m >= 1; m--) {
-    const historicalTs = now - m * 60_000;
+    const historicalTs = new Date(now - m * 60_000).toISOString();
     GATEWAY_IDS.forEach((gatewayId, idx) => {
       const payload = {
-        gateway_id: gatewayId,
+        d: buildSensors(idx, 50),
         ts: historicalTs,
-        sensors: buildSensors(idx, 50),
+        type: 0,
       };
       client.publish(`gateways/${gatewayId}/telemetry`, JSON.stringify(payload), { qos: 1 });
     });
@@ -49,12 +48,12 @@ client.on('connect', () => {
 
   // Real-time telemetry every 5 seconds
   setInterval(() => {
-    const ts = Date.now();
+    const ts = new Date().toISOString();
     GATEWAY_IDS.forEach((gatewayId, idx) => {
       const payload = {
-        gateway_id: gatewayId,
+        d: buildSensors(idx, 50),
         ts,
-        sensors: buildSensors(idx, 50),
+        type: 0,
       };
       client.publish(`gateways/${gatewayId}/telemetry`, JSON.stringify(payload), { qos: 1 });
     });

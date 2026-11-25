@@ -59,4 +59,27 @@ describe('parseTelemetryPayload', () => {
     expect(readings[0].gatewayId).toBe('ecu-1051-02');
     expect(readings[0].timestamp.getTime()).toBe(ts);
   });
+
+  it('parses ECU-1051 EdgeLink {"d":[{"tag":...,"value":...}],"ts":...,"type":0} payload', () => {
+    const raw = JSON.stringify({
+      d: [
+        { tag: 'TEMP_01', value: 30.0 },
+        { tag: 'PRESS_02', value: 5.5 },
+      ],
+      ts: '2026-11-25T16:00:20Z',
+      type: 0,
+    });
+
+    const readings = parseTelemetryPayload(raw, 'gateways/ecu-1051-01/telemetry');
+    expect(readings).toHaveLength(2);
+    expect(readings[0]).toEqual({
+      gatewayId: 'ecu-1051-01',
+      sensorId: 'TEMP_01',
+      type: '0',
+      value: 30,
+      statusCode: 0,
+      timestamp: new Date('2026-11-25T16:00:20Z'),
+    });
+    expect(readings[1].sensorId).toBe('PRESS_02');
+  });
 });
