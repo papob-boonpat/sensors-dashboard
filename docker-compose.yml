@@ -1,0 +1,53 @@
+services:
+  mosquitto:
+    image: eclipse-mosquitto:2
+    container_name: data-logger-mosquitto
+    ports:
+      - "1883:1883"
+    volumes:
+      - ./mosquitto/mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
+      - mosquitto_data:/mosquitto/data
+    restart: unless-stopped
+
+  timescaledb:
+    image: timescale/timescaledb:latest-pg16
+    container_name: data-logger-timescaledb
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgrespassword
+      POSTGRES_DB: telemetry
+    volumes:
+      - timescaledb_data:/var/lib/postgresql/data
+    restart: unless-stopped
+
+  backend:
+    build: ./backend
+    container_name: data-logger-backend
+    ports:
+      - "4000:4000"
+    environment:
+      PORT: 4000
+      MQTT_URL: mqtt://mosquitto:1883
+      MQTT_TOPICS: gateways/+/telemetry
+      DATABASE_URL: postgres://postgres:postgrespassword@timescaledb:5432/telemetry
+      BATCH_SIZE: 500
+      FLUSH_INTERVAL_MS: 5000
+    depends_on:
+      - mosquitto
+      - timescaledb
+    restart: unless-stopped
+
+  frontend:
+    build: ./frontend
+    container_name: data-logger-frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+volumes:
+  mosquitto_data:
+  timescaledb_data:
