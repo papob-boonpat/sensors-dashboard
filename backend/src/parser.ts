@@ -57,7 +57,9 @@ function normalizeSingleItem(
   const rawValue = item.value ?? item.val;
   const value = typeof rawValue === 'boolean' ? (rawValue ? 1 : 0) : Number(rawValue);
   const statusCode = item.status_code !== undefined ? Number(item.status_code) : 0;
-  const timestamp = parsePayloadTimestamp(item.ts ?? item.timestamp ?? fallbackTs);
+  const timestamp = parsePayloadTimestamp(
+    item.ts ?? item.recorded_at ?? item.timestamp ?? fallbackTs
+  );
 
   if (!gatewayId) {
     throw new Error('Missing gateway_id in payload');
@@ -115,7 +117,7 @@ export function parseTelemetryPayload(raw: string | Buffer, topic?: string): Nor
   if (items) {
     const batchGateway =
       String(obj.gateway_id ?? obj.gatewayId ?? topicGateway ?? '').trim() || undefined;
-    const batchTs = obj.ts ?? obj.timestamp;
+    const batchTs = obj.ts ?? obj.recorded_at ?? obj.timestamp;
     const batchType = obj.type !== undefined && obj.type !== null ? String(obj.type) : undefined;
     return items.map((sensor) => {
       if (!sensor || typeof sensor !== 'object') {

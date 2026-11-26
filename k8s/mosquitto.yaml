@@ -7,11 +7,17 @@ data:
   mosquitto.conf: |
     listener 1883
     allow_anonymous true
+
+    listener 9001
+    protocol websockets
+    allow_anonymous true
+
     persistence true
     persistence_location /mosquitto/data/
-    log_dest stdout
-    max_queued_messages 100000
+    max_queued_messages 0
     max_inflight_messages 100
+    persistent_client_expiration 24h
+    log_dest stdout
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim
@@ -46,6 +52,7 @@ spec:
           image: eclipse-mosquitto:2
           ports:
             - containerPort: 1883
+            - containerPort: 9001
           volumeMounts:
             - name: config
               mountPath: /mosquitto/config/mosquitto.conf
@@ -73,3 +80,6 @@ spec:
     - name: mqtt
       port: 1883
       targetPort: 1883
+    - name: websockets
+      port: 9001
+      targetPort: 9001

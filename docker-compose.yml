@@ -30,6 +30,12 @@ services:
       POSTGRES_DB: telemetry
     volumes:
       - timescaledb_data:/var/lib/postgresql/data
+      - ./db/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d telemetry"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
     restart: unless-stopped
 
   backend:
@@ -41,13 +47,17 @@ services:
     environment:
       PORT: 4000
       MQTT_URL: mqtt://mosquitto:1883
+      MQTT_CLIENT_ID: nodejs-timescale-ingestor
       MQTT_TOPICS: gateways/+/telemetry
       DATABASE_URL: postgres://postgres:postgrespassword@timescaledb:5432/telemetry
       BATCH_SIZE: 500
-      FLUSH_INTERVAL_MS: 5000
+      FLUSH_INTERVAL_MS: 2000
+      MAX_RETRY_DELAY_MS: 30000
     depends_on:
-      - mosquitto
-      - timescaledb
+      mosquitto:
+        condition: service_started
+      timescaledb:
+        condition: service_healthy
     restart: unless-stopped
 
   frontend:
