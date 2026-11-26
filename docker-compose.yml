@@ -10,11 +10,13 @@ services:
       - mosquitto_data:/mosquitto/data
     restart: unless-stopped
 
-  mqtt-ui:
-    image: emqx/mqttx-web:latest
-    container_name: data-logger-mqtt-ui
+  mqtt-explorer:
+    image: smeagolworms4/mqtt-explorer:latest
+    container_name: data-logger-mqtt-explorer
     ports:
-      - "8080:80"
+      - "8081:4000"
+    environment:
+      HTTP_PORT: 4000
     depends_on:
       - mosquitto
     restart: unless-stopped

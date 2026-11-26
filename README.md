@@ -26,7 +26,7 @@ End-to-end telemetry ingestion, time-series storage, interval-based reporting, a
 docker compose up -d
 ```
 - **MQTT Broker**: `mqtt://localhost:1883` (WebSocket: `ws://localhost:9001`)
-- **MQTT Web UI (MQTTX)**: `http://localhost:8080` (connect using `ws://localhost:9001`)
+- **MQTT Explorer (Broker & Topic Monitor)**: `http://localhost:8081` (connect to `mosquitto` port `1883`, subscribe to `#` and `$SYS/#` to inspect incoming topics, cached payloads, and broker queue/client stats)
 - **TimescaleDB**: `postgres://postgres:postgrespassword@localhost:5432/telemetry`
 - *(Optional)* To also run `backend` and `frontend` in Docker: `docker compose --profile app up -d`
 
