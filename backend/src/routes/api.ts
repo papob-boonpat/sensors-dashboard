@@ -46,6 +46,8 @@ apiRouter.get('/metadata', async (_req, res) => {
 
 apiRouter.get('/sensors/history', async (req, res) => {
   try {
+    const periodSeconds = req.query.period_seconds ? Number(req.query.period_seconds) : undefined;
+    const anchorLatest = req.query.anchor === 'latest' || (periodSeconds !== undefined && periodSeconds > 0);
     const { from, to } = parseDateRange(req.query.from, req.query.to);
     const gatewayId = req.query.gateway_id ? String(req.query.gateway_id) : undefined;
     const type = req.query.type ? String(req.query.type) : undefined;
@@ -59,11 +61,13 @@ apiRouter.get('/sensors/history', async (req, res) => {
       sensorIds,
       type,
       window,
+      periodSeconds: periodSeconds && Number.isFinite(periodSeconds) ? periodSeconds : undefined,
+      anchorLatest,
     });
 
     res.json({
-      from: from.toISOString(),
-      to: to.toISOString(),
+      from: result.from.toISOString(),
+      to: result.to.toISOString(),
       windowUsed: result.windowUsed,
       count: result.points.length,
       points: result.points,

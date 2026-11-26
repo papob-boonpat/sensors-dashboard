@@ -12,17 +12,20 @@ export async function fetchMetadata(): Promise<{
 }
 
 export async function fetchHistory(params: {
-  from: string;
-  to: string;
+  from?: string;
+  to?: string;
+  periodSeconds?: number;
+  anchor?: 'latest';
   gatewayId?: string;
   type?: string;
   sensorIds?: string[];
   window?: string;
 }): Promise<HistoryResponse> {
-  const qs = new URLSearchParams({
-    from: params.from,
-    to: params.to,
-  });
+  const qs = new URLSearchParams();
+  if (params.from) qs.set('from', params.from);
+  if (params.to) qs.set('to', params.to);
+  if (params.periodSeconds) qs.set('period_seconds', String(params.periodSeconds));
+  if (params.anchor) qs.set('anchor', params.anchor);
   if (params.gatewayId) qs.set('gateway_id', params.gatewayId);
   if (params.type) qs.set('type', params.type);
   if (params.sensorIds && params.sensorIds.length > 0) {

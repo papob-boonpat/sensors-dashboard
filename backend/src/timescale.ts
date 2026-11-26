@@ -314,16 +314,52 @@ export interface HistoryQueryParams {
   sensorIds?: string[];
   type?: string;
   window?: string;
+  periodSeconds?: number;
+  anchorLatest?: boolean;
 }
 
 export async function queryHistory(params: HistoryQueryParams): Promise<{
+  from: Date;
+  to: Date;
   windowUsed: string;
   points: HistoryPoint[];
 }> {
-  const windowUsed = chooseDownsampleWindow(params.from, params.to, params.window);
+  let from = params.from;
+  let to = params.to;
+
+  if (params.anchorLatest && params.periodSeconds && params.periodSeconds > 0) {
+    const anchorValues: unknown[] = [];
+    const anchorConds: string[] = [];
+    if (params.gatewayId) {
+      anchorValues.push(params.gatewayId);
+      anchorConds.push(`st.gateway_id = $${anchorValues.length}`);
+    }
+    if (params.type) {
+      anchorValues.push(params.type);
+      anchorConds.push(`st.sensor_type = $${anchorValues.length}`);
+    }
+    if (params.sensorIds && params.sensorIds.length > 0) {
+      anchorValues.push(params.sensorIds);
+      anchorConds.push(`sd.tag_id = ANY($${anchorValues.length}::text[])`);
+    }
+    const anchorWhere = anchorConds.length > 0 ? `WHERE ${anchorConds.join(' AND ')}` : '';
+    const latestRes = await pool.query<{ latest: Date | null }>(
+      `
+      SELECT MAX(sd.recorded_at) AS latest
+      FROM sensor_data sd
+      JOIN sensor_tags st ON st.tag_id = sd.tag_id
+      ${anchorWhere};
+      `,
+      anchorValues
+    );
+    to = latestRes.rows[0]?.latest ? new Date(latestRes.rows[0].latest) : new Date();
+    from = new Date(to.getTime() - params.periodSeconds * 1000);
+  }
+
+  const windowUsed = chooseDownsampleWindow(from, to, params.window);
   const pgInterval = INTERVAL_MAP[windowUsed];
 
-  const values: unknown[] = [params.from, params.to];
+  const values: unknown[] = [from, to];
   const conditions: string[] = ['sd.recorded_at >= $1', 'sd.recorded_at <= $2'];
 
   if (params.gatewayId) {
@@ -403,5 +439,5 @@ export async function queryHistory(params: HistoryQueryParams): Promise<{
     value: Number(row.value),
   }));
 
-  return { windowUsed, points };
+  return { from, to, windowUsed, points };
 }
